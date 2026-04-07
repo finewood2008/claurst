@@ -1645,7 +1645,7 @@ impl App {
 
     /// Update the context window size from the model registry for the current model.
     pub fn refresh_context_window_size(&mut self) {
-        let provider = self.config.provider.as_deref().unwrap_or("anthropic");
+        let provider = self.config.provider.as_deref().unwrap_or(claurst_core::constants::DEFAULT_PROVIDER);
         let model_id = self.model_name
             .strip_prefix(&format!("{}/", provider))
             .unwrap_or(&self.model_name);
@@ -1798,7 +1798,7 @@ impl App {
                     .config
                     .provider
                     .clone()
-                    .unwrap_or_else(|| "anthropic".to_string());
+                    .unwrap_or_else(|| claurst_core::constants::DEFAULT_PROVIDER.to_string());
                 self.open_model_picker_for_provider(&provider, None);
                 true
             }
@@ -2798,7 +2798,7 @@ impl App {
                         }
                         // Store explicit selections in the canonical
                         // "provider/model" form for non-Anthropic providers.
-                        let provider = self.config.provider.as_deref().unwrap_or("anthropic");
+                        let provider = self.config.provider.as_deref().unwrap_or(claurst_core::constants::DEFAULT_PROVIDER);
                         let full_model = if provider == "anthropic" {
                             model_id.clone()
                         } else {
@@ -5032,7 +5032,7 @@ impl App {
                             .config
                             .provider
                             .clone()
-                            .unwrap_or_else(|| "anthropic".to_string());
+                            .unwrap_or_else(|| claurst_core::constants::DEFAULT_PROVIDER.to_string());
                         let provider_prefix = format!("{}/", provider);
                         let current = self
                             .model_name
@@ -5058,7 +5058,7 @@ impl App {
             // Spawn async provider model-list fetch when requested.
             if self.model_picker_fetch_pending {
                 self.model_picker_fetch_pending = false;
-                let provider_id_str = self.config.provider.clone().unwrap_or_else(|| "anthropic".to_string());
+                let provider_id_str = self.config.provider.clone().unwrap_or_else(|| claurst_core::constants::DEFAULT_PROVIDER.to_string());
                 if let Some(ref registry) = self.provider_registry {
                     let pid = claurst_core::ProviderId::new(&provider_id_str);
                     if let Some(provider) = registry.get(&pid) {

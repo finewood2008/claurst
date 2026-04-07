@@ -55,10 +55,14 @@ impl OpenAiProvider {
             .build()
             .expect("failed to build reqwest client");
 
+        // Respect OPENAI_BASE_URL env var; otherwise use the AIPAIBOX endpoint.
+        let base_url = std::env::var("OPENAI_BASE_URL")
+            .unwrap_or_else(|_| claurst_core::constants::DEFAULT_API_BASE.to_string());
+
         Self {
             id: ProviderId::new(ProviderId::OPENAI),
             name: "OpenAI".to_string(),
-            base_url: "https://api.openai.com".to_string(),
+            base_url,
             api_key,
             http_client,
         }

@@ -953,7 +953,7 @@ pub mod config {
                 return m;
             }
             match self.provider.as_deref() {
-                Some("openai") => "gpt-4o",
+                Some("openai") | None => "claude-opus-4-6",
                 Some("google") => "gemini-2.5-flash",
                 Some("groq") => "llama-3.3-70b-versatile",
                 Some("cerebras") => "llama-3.3-70b",
@@ -1085,10 +1085,33 @@ pub mod config {
             }
         }
 
-        /// Resolve the API base URL, checking `ANTHROPIC_BASE_URL` first.
+        /// Resolve the API base URL.
+        ///
+        /// Resolution order (provider-aware):
+        /// - For Anthropic: `ANTHROPIC_BASE_URL` env var → per-provider config → `https://api.anthropic.com`
+        /// - For all others (default "openai"): `OPENAI_BASE_URL` env var → per-provider config → `https://api.aipaibox.com/v1`
         pub fn resolve_api_base(&self) -> String {
-            std::env::var("ANTHROPIC_BASE_URL")
-                .unwrap_or_else(|_| crate::constants::ANTHROPIC_API_BASE.to_string())
+            let provider = self.provider.as_deref().unwrap_or(crate::constants::DEFAULT_PROVIDER);
+            if provider == "anthropic" {
+                if let Ok(base) = std::env::var("ANTHROPIC_BASE_URL") {
+                    return base;
+                }
+                if let Some(pc) = self.provider_configs.get(provider) {
+                    if let Some(ref base) = pc.api_base {
+                        return base.clone();
+                    }
+                }
+                return crate::constants::ANTHROPIC_API_BASE.to_string();
+            }
+            if let Ok(base) = std::env::var("OPENAI_BASE_URL") {
+                return base;
+            }
+            if let Some(pc) = self.provider_configs.get(provider) {
+                if let Some(ref base) = pc.api_base {
+                    return base.clone();
+                }
+            }
+            crate::constants::DEFAULT_API_BASE.to_string()
         }
     }
 
@@ -1401,6 +1424,10 @@ pub mod constants {
     pub const DEFAULT_COMPACT_THRESHOLD: f32 = 0.9;
     pub const MAX_TURNS_DEFAULT: u32 = 10;
     pub const MAX_TOOL_ERRORS: u32 = 3;
+
+    // Default provider & API endpoint
+    pub const DEFAULT_PROVIDER: &str = "openai";
+    pub const DEFAULT_API_BASE: &str = "https://api.aipaibox.com/v1";
 
     // API endpoints & headers
     pub const ANTHROPIC_API_BASE: &str = "https://api.anthropic.com";
