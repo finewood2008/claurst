@@ -1087,29 +1087,31 @@ pub mod config {
 
         /// Resolve the API base URL.
         ///
-        /// Resolution order:
-        /// 1. `OPENAI_BASE_URL` environment variable (for OpenAI-compatible providers)
-        /// 2. `ANTHROPIC_BASE_URL` environment variable (for Anthropic direct)
-        /// 3. Per-provider config `api_base` (if set)
-        /// 4. Default: `https://api.aipaibox.com/v1` (AIPAIBOX OpenAI-compatible endpoint)
+        /// Resolution order (provider-aware):
+        /// - For Anthropic: `ANTHROPIC_BASE_URL` env var → per-provider config → `https://api.anthropic.com`
+        /// - For all others (default "openai"): `OPENAI_BASE_URL` env var → per-provider config → `https://api.aipaibox.com/v1`
         pub fn resolve_api_base(&self) -> String {
+            let provider = self.provider.as_deref().unwrap_or(crate::constants::DEFAULT_PROVIDER);
+            if provider == "anthropic" {
+                if let Ok(base) = std::env::var("ANTHROPIC_BASE_URL") {
+                    return base;
+                }
+                if let Some(pc) = self.provider_configs.get(provider) {
+                    if let Some(ref base) = pc.api_base {
+                        return base.clone();
+                    }
+                }
+                return crate::constants::ANTHROPIC_API_BASE.to_string();
+            }
             if let Ok(base) = std::env::var("OPENAI_BASE_URL") {
                 return base;
             }
-            if let Ok(base) = std::env::var("ANTHROPIC_BASE_URL") {
-                return base;
-            }
-            let provider = self.provider.as_deref().unwrap_or(crate::constants::DEFAULT_PROVIDER);
             if let Some(pc) = self.provider_configs.get(provider) {
                 if let Some(ref base) = pc.api_base {
                     return base.clone();
                 }
             }
-            if provider == "anthropic" {
-                crate::constants::ANTHROPIC_API_BASE.to_string()
-            } else {
-                crate::constants::DEFAULT_API_BASE.to_string()
-            }
+            crate::constants::DEFAULT_API_BASE.to_string()
         }
     }
 
