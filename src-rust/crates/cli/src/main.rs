@@ -487,7 +487,9 @@ async fn main() -> anyhow::Result<()> {
     }
     if let Some(base) = &cli.api_base {
         // Store in the provider's config entry
-        let provider_id = config.provider.clone().unwrap_or_else(|| "anthropic".to_string());
+        let provider_id = config.provider.clone().unwrap_or_else(|| {
+            claurst_core::constants::DEFAULT_PROVIDER.to_string()
+        });
         config
             .provider_configs
             .entry(provider_id)
@@ -536,7 +538,8 @@ async fn main() -> anyhow::Result<()> {
     // requiring Anthropic auth. Only launch the OAuth flow when Anthropic is
     // explicitly the intended provider and no key exists at all.
     let other_provider_configured = {
-        let active_provider = config.provider.as_deref().unwrap_or("anthropic");
+        let active_provider = config.provider.as_deref()
+            .unwrap_or(claurst_core::constants::DEFAULT_PROVIDER);
         let has_non_anthropic_env =
             std::env::var("OPENAI_API_KEY").is_ok()
             || std::env::var("GOOGLE_API_KEY").is_ok()
@@ -564,7 +567,8 @@ async fn main() -> anyhow::Result<()> {
 
     let (api_key, use_bearer_auth) = match config.resolve_auth_async().await {
         Some(auth) => auth,
-        None if other_provider_configured && config.provider.as_deref().unwrap_or("anthropic") != "anthropic" => {
+        None if other_provider_configured && config.provider.as_deref()
+            .unwrap_or(claurst_core::constants::DEFAULT_PROVIDER) != "anthropic" => {
             // Non-Anthropic provider selected — no Anthropic key needed.
             (String::new(), false)
         }

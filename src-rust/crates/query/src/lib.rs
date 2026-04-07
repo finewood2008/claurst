@@ -889,7 +889,7 @@ pub async fn run_query_loop(
                 } else {
                     // Treat the whole string as the model ID, fall through
                     // to auto-detection below.
-                    let fallback_provider = tool_ctx.config.provider.as_deref().unwrap_or("anthropic");
+                    let fallback_provider = tool_ctx.config.provider.as_deref().unwrap_or(claurst_core::constants::DEFAULT_PROVIDER);
                     (fallback_provider.to_string(), effective_model.clone())
                 }
             } else {
@@ -919,8 +919,8 @@ pub async fn run_query_loop(
                         ("anthropic".to_string(), effective_model.clone())
                     }
                 } else {
-                    // Fall back to config.provider (may be "anthropic" or None→"anthropic")
-                    let p = tool_ctx.config.provider.as_deref().unwrap_or("anthropic");
+                    // Fall back to config.provider (may be explicitly set or defaults to DEFAULT_PROVIDER)
+                    let p = tool_ctx.config.provider.as_deref().unwrap_or(claurst_core::constants::DEFAULT_PROVIDER);
                     (p.to_string(), effective_model.clone())
                 }
             };

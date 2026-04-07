@@ -285,6 +285,7 @@ impl ModelRegistry {
         // "flagship" quality and are preferred as defaults.
         // Mirrors OpenCode's: ["gpt-5", "claude-sonnet-4", "big-pickle", "gemini-3-pro"]
         let priority_patterns: &[&str] = &[
+            "claude-opus-4-6",
             "claude-sonnet-4",
             "gpt-5",
             "gpt-4o",
@@ -565,11 +566,15 @@ pub fn effective_model_for_config(
         return config.effective_model().to_string();
     }
 
+    // Resolve effective provider, defaulting to "openai" (AIPAIBOX).
+    let provider_id = config
+        .provider
+        .as_deref()
+        .unwrap_or(claurst_core::constants::DEFAULT_PROVIDER);
+
     // Try the model registry for the configured provider.
-    if let Some(provider_id) = config.provider.as_deref() {
-        if let Some(best) = registry.best_model_for_provider(provider_id) {
-            return best;
-        }
+    if let Some(best) = registry.best_model_for_provider(provider_id) {
+        return best;
     }
 
     // Fall back to the hardcoded table.
